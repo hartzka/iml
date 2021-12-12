@@ -5,8 +5,109 @@ output:
     latex_engine: xelatex
 ---
 
-##1 
+# Group 168 Kai Hartzell
+## Predicting npf events
+
+
+```{r, echo=FALSE}
+train <- read.csv("npf_train.csv")
+test <- read.csv("npf_test_hidden.csv")
+
+npf_test <- test[c(3,5:104)]
+npf_test[1]="nonevent"
+npf_train <- train[c(3,5:104)]
+npf_train$class4 <- factor(npf_train$class4,levels=c("nonevent","II","Ia","Ib"))
+
+nb_pars <- data.frame(
+  class_non.mean = apply(npf_train[npf_train$class4=="nonevent",2:101],2,mean),
+  class_non.sd = apply(npf_train[npf_train$class4=="nonevent",2:101],2,sd),
+  classII.mean = apply(npf_train[npf_train$class4=="II",2:101],2,mean),
+  classII.sd = apply(npf_train[npf_train$class4=="II",2:101],2,sd),
+  classIa.mean = apply(npf_train[npf_train$class4=="Ia",2:101],2,mean),
+  classIa.sd = apply(npf_train[npf_train$class4=="Ia",2:101],2,sd),
+  classIb.mean = apply(npf_train[npf_train$class4=="Ib",2:101],2,mean),
+  classIb.sd = apply(npf_train[npf_train$class4=="Ib",2:101],2,sd)
+)
+
+nb_class <- (1+table(npf_train$class4))/(4+nrow(npf_train))
+
+f <- function(x,mu,sigma) exp(-(x-mu)^2/(2*sigma^2))/sqrt(2*pi*sigma^2)
+
+nb <- function(x) {
+  x <- unlist(x)
+
+  pxy_non <- prod(sapply(2:11,function(i) f(x[i],nb_pars[i,"class_non.mean"],nb_pars[i,"class_non.sd"])), na.rm = TRUE)
+  pxyII <- prod(sapply(2:11, function(i) f(x[i],nb_pars[i,"classII.mean"],nb_pars[i,"classII.sd"])), na.rm = TRUE)
+  pxyIa <- prod(sapply(2:11, function(i) f(x[i],nb_pars[i,"classIa.mean"],nb_pars[i,"classIa.sd"])), na.rm = TRUE)
+  pxyIb <- prod(sapply(2:11, function(i) f(x[i],nb_pars[i,"classIb.mean"],nb_pars[i,"classIb.sd"])), na.rm = TRUE)
+  
+  sum <- pxy_non*nb_class["nonevent"]+pxyII*nb_class["II"]+pxyIa*nb_class["Ia"]+pxyIb*nb_class["Ib"]
+  return (c(pxy_non*nb_class["nonevent"]/sum, pxyII*nb_class["II"]/sum, pxyIa*nb_class["Ia"]/sum, pxyIb*nb_class["Ib"]/sum))
+}
+
+nb2 <- function(x) {
+  x <- unlist(x)
+
+  pxyII <- prod(sapply(2:11, function(i) f(x[i],nb_pars[i,"classII.mean"],nb_pars[i,"classII.sd"])), na.rm = TRUE)
+  pxyIa <- prod(sapply(2:11, function(i) f(x[i],nb_pars[i,"classIa.mean"],nb_pars[i,"classIa.sd"])), na.rm = TRUE)
+  pxyIb <- prod(sapply(2:11, function(i) f(x[i],nb_pars[i,"classIb.mean"],nb_pars[i,"classIb.sd"])), na.rm = TRUE)
+  
+  sum <- pxyII*nb_class["II"]+pxyIa*nb_class["Ia"]+pxyIb*nb_class["Ib"]
+  return (c(pxyII*nb_class["II"]/sum, pxyIa*nb_class["Ia"]/sum, pxyIb*nb_class["Ib"]/sum))
+}
+
+yhat <- apply(npf_test[,2:101],1,nb)
+#yhat
+ans <- ifelse(apply(npf_test[,2:101],1,nb)[1,]>=nb_class["nonevent"],"nonevent",
+              ifelse(apply(npf_test[,2:101],1,nb2)[1,]>=nb_class["II"]+nb_class["nonevent"]/3, "II",
+                     ifelse(apply(npf_test[,2:101],1,nb2)[2,]>=nb_class["Ia"]+nb_class["nonevent"]/3+nb_class["II"]/2, "Ia", "Ib")))
+
+df <- data.frame(c("0.73", "class4", ans), c("", "p", 1-yhat[1,]), fix.empty.names = FALSE)
+
+write.csv(df,"answers.csv", row.names = FALSE)
+```
+
+In this project, I used NB classifier to predict event and nonevent days.
+The training data, _npf_train.csv_, included 104 columns and 458 observations in total.
+The test data, _npf_test_hidden.csv_, included 965 unclassified observations.
+There were columns `id`, `date`, `class4`, `partlybad` and 100 other variables measured.
+
+I dropped out columns `id`, `date` and `partlybad` of both train and test data, because `id` and `date` did not have any impact on the results, and the value of `partlybad` was always false. The `class4` column indicated the observed class, and it was one of these: `II`, `Ia`, `Ib`, `nonevent`.
+
+The binary classification task was to identify nonevent and event classes, ie. `II`, `Ia`, `Ib`. The hidden test data did not contain the class values, but I replaced the `NA` values with a placeholder `nonevent`. I factored the training data classes as `II`, `Ia`, `Ib`, `nonevent`.
+
+Next, I constructed a data frame and table of the class sd and mean values:
+
+```{r, echo=FALSE}
+knitr::kable(nb_pars)
+```
+
+Laplace smoothing of 1 was used for the data. The estimated class probabilities for training data:
 
 ```{r}
-
+nb_class
 ```
+
+Then I applied NB classifier to compute the class probabilities for all rows of testing data. The variables were considered as conditionally independent. The classifier predicted the probabilities of each class for each row. The row was identified as `nonevent`, if the probability was higher than the `nb_class` probability for that class.
+
+The formula of NB Gaussian density was $\frac{e^{(-(x-\mu)^2/(2*\sigma^2))}}{\sqrt{2*\pi*\sigma^2}}$
+
+I used some small coefficient adjustments and modifications for the multivariate classification problem. I quessed that the accuracy of the binary classification could be 0.73. The head of estimated classes and probabilities:
+
+```{r}
+head(df, 10)
+```
+
+This whole data frame was exported as a csv file.
+The predicted class distributions for testing data for classes `nonevent`, `II`, `Ia`, `Ib`:
+
+```{r, echo=FALSE}
+sum(ans=="nonevent")/965
+sum(ans=="II")/965
+sum(ans=="Ia")/965
+sum(ans=="Ib")/965
+```
+
+Regarding the methods, I considered using cross-validation or SVM. The pros of NB are that it is a highly scalable and simple generative classifier. NB can usually be trained efficiently in supervised learning, and it often requires only a small number of training data.
+
+After making some tweaks, I got the NB classifier to predict reasonable results, but there were initially some problems with the class distributions. I learned the effectiviness and usability of NB classifier.
