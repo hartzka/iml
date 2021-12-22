@@ -4,7 +4,6 @@ output:
   pdf_document:
     latex_engine: xelatex
 ---
-
 \pagenumbering{arabic}
 
 \begin{titlepage}
@@ -48,17 +47,17 @@ Therefore, we are using machine learning methods and libraries to help predictin
 
 The training data, `npf_train.csv`, contained observed NPF data and exactly 100 feature columns presenting physical characteristics. In fact, there were 50 measured variables in total, and for each of the variables, computed mean and std values. A longer description of the variables can be found at \cite{2}.
 
-The measurements have been gathered during various days and times between sunrise and sunset. The test data, `npf_test_hidden.csv`, is similar to the training data, but the classes are unknown and thus need to be predicted.
+The measurements have been gathered during various days and times between sunrise and sunset. The test data, `npf_test_hidden.csv`, was similar to the training data, but the classes were unknown and thus needed to be predicted.
 
 The class variable `class4` (because of 4 different class categories) could be either `nonevent` or one of the three events: `II`, `Ia` or `Ib`.
 
-The label `nonevent` means that no NPF event occurred, otherwise some of the three events occurred.
+The label `nonevent` meant that no NPF event occurred, otherwise some of the three events occurred.
 
-Event classes were separated into classes `II` and `I`, the latter into two additional classes `Ia` and `Ib`. Class `II` meant that the confidence level of NPF growth and formation rates was low. Classes belonging to `I` had high confidence level. Class `Ia` meant strong NPF events, while `Ib` included other events \cite{6}.
+Event classes were separated into classes `II` and `I`, the latter into two additional classes `Ia` and `Ib`. Class `II` meant that the confidence level of NPF growth and formation rates was low. Classes belonging to `I` had high confidence levels. Class `Ia` represented strong NPF events, while `Ib` included other class `I` events \cite{6}.
 
-Eventually, I decided to use Gaussian Naive Bayes (NB, or GNB vs. Bernoulli BNB) classifier to predict NPF events based on testing data, `npf_test_hidden.csv`. The "hidden" means that the testing data did not include the class labels.
+Eventually, I decided to use Gaussian Naive Bayes NB, (or GNB in separation to Bernoulli BNB) classifier to predict NPF events based on testing data, `npf_test_hidden.csv`. The "hidden" meant that the testing data did not include class labels.
 
-This project was done using R with R Markdown and Git as version control. The computations as well as tables in this report were performed with R, and the text mostly with R Markdown. The used IDE was RStudio. There exist small displayed chunks of code, but the code is mostly not echoed. The whole project can be found from the Git repo.
+This project was done using R with R Markdown and Git as version control. The computations as well as tables in this report were performed with R, and the text mostly with R Markdown. The used IDE was RStudio. There exist small displayed chunks of code, but the code is mostly not echoed. The whole project can be found from the Git repo \cite{8}.
 
 In the following sections, I will present the data pre-processing, machine learning methods used, training of the model, discussing and results of the project.
 
@@ -75,7 +74,7 @@ test <- read.csv("npf_test_hidden.csv")
 
 The training data, `npf_train.csv`, included 104 columns and 458 observations in total.
 The test data, `npf_test_hidden.csv`, included 965 unclassified observations.
-There were columns `id`, `date`, `class4`, `partlybad` and 100 other feature variables measured.
+The datasets consisted of columns `id`, `date`, `class4`, `partlybad` and 100 other feature variables measured.
 The datasets were quite clean and did not need much pre-processing.
 This shows how the data looked like. This is the first observation.
 
@@ -138,13 +137,13 @@ df <- data.frame(c("0.73", "class4", ans), c("", "p", 1-yhat[1,]), fix.empty.nam
 write.csv(df,"answers.csv", row.names = FALSE)
 ```
 
-I decided to drop out columns `id`, `date` and `partlybad` from both train and test data, because `id` and `date` did not have any impact on the results, and the value of `partlybad` was always `FALSE`. The `class4` column indicated the observed class, and it was one of these: `II`, `Ia`, `Ib`, `nonevent`.
+I decided to drop out columns `id`, `date` and `partlybad` from both train and test data, because `id` and `date` did not have any impact on the results, and the value of `partlybad` was always `FALSE`. The `class4` column indicated the observed class, and it was one of the classes `II`, `Ia`, `Ib` or `nonevent`.
 
-The binary classification task was to identify nonevent and event classes, ie. `II`, `Ia`, `Ib`. The hidden test data was similar to training data, but did not contain the class values. I replaced the `NA` values with a placeholder `nonevent`. I factored the training data classes as `II`, `Ia`, `Ib`, `nonevent`.
+The binary classification task was to identify nonevent and event classes, i.e. `II`, `Ia`, `Ib`. The hidden test data was similar to the training data, but did not contain class values. I replaced the `NA` values with a placeholder `nonevent`. Then I factored the training data classes as `II`, `Ia`, `Ib`, `nonevent`.
 
 \newpage
 
-Next, I constructed a data frame and table of the class sd and mean values:
+Next, I constructed a data frame and a table of the class sd and mean values:
 
 ```{r, echo=FALSE}
 knitr::kable(nb_pars)
@@ -153,7 +152,7 @@ knitr::kable(nb_pars)
 \newpage
 
 We notice that there are some undefined measurements, but they do not have a large impact.
-Laplace smoothing of 1 was used for the data. The estimated class probabilities for training data:
+Laplace smoothing of 1 was used for the data. The estimated class probabilities for the training data:
 
 ```{r}
 nb_class
@@ -173,7 +172,7 @@ The class distibution plotted.
 \section{3. Machine learning methods and steps}
 \vspace*{1cm}
 
-I applied Gaussian NB classifier \cite{7} to compute the class probabilities for all rows of testing data. The variables were considered as conditionally independent (because of that is the pre-assumption), even though some of them might have a relationship, smaller or larger correlation.
+I applied Gaussian NB classifier \cite{7} to compute the class probabilities for all rows of testing data. The variables were considered as conditionally independent (because of that is the pre-assumption), even though some of them might have a relationship, i.e. smaller or larger correlation.
 
 The variables were studied and only a subset of the variables were used. There were some challenges choosing the variables. The classifier predicted the probabilities of each class for each row. The row was identified as `nonevent`, if the probability was higher than the `nb_class` probability for that class.
 
@@ -187,7 +186,7 @@ I used some small coefficient adjustments and modifications for the multiclass c
 
 The predicted probabilities were compared step by step, with different coefficients. The target was to produce reasonable prediction probabilities for the classes. 
 
-After having identified the class as nonevent or event, the event class had to be predicted, if it was not nonevent. I compared the probabilities of different predicted events with NB classifier and chose suitable coefficients for predicting the event classes. I guessed that the accuracy of the binary classification could be 0.73.
+After having identified the class as `nonevent` or `event`, the event class had to be predicted, if it was not `nonevent`. I compared the probabilities of different predicted events with NB classifier and chose suitable coefficients for predicting the event classes. I guessed that the accuracy of the binary classification could be 0.73.
 
 Regarding the different classification sub-tasks, the main target was to build a reasonably performing binary classifier. Building a more accurate event class classifier was not as important, although the higher accuracy, the better.
 
@@ -197,9 +196,9 @@ The first 15 estimated classes and probabilities were:
 head(df, 15)
 ```
 
-The first row contains the guessed accuracy, and the second row labels for the classes and probabilities: `class4` and `p`.
+In the above table, the first row contains the guessed accuracy, and the second row labels for the classes and probabilities: `class4` and `p`.
 
-After that, each row contains the predicted class and prediction probability for the class being an event class, for each data row in the test data. So if the probability `p` is 0.3, the probability of a `non-event` would be 0.7.
+After that, each row contained the predicted class and prediction probability for the class being an event class, for each data row in the test data. So if the probability `p` was 0.3, the probability of a `non-event` would have then been 0.7.
 
 This whole data frame was exported as a csv file `answers.csv`. That file contains all the predicted results.
 
@@ -217,21 +216,21 @@ sum(ans=="Ia")/965
 sum(ans=="Ib")/965
 ```
 
-These probabilities were quite close to the probabilities in training data.
+These probabilities were quite close to the probabilities in the training data.
 
-It turned out that my binary accuracy (predicting event vs. nonevent) was about 0.795, actually higher than the guessed 0.73. The margin of error was quite small: about 0.065. In addition, the multiaccuracy (predicting the correct class) was around 0.585, meaning that the model could have performed better, but at least it predicted almost 3 out of 5 classes correctly. As expected, it was more difficult to predict event classes than to predict binary classes (i.e. event vs. non-event).
+It turned out that my binary accuracy (predicting event vs. nonevent) was about 0.795, actually higher than the guessed value 0.73. The margin of error was quite small: about 0.065. In addition, the multiaccuracy (predicting the correct class) was around 0.585, meaning that the model could have performed better, but at least it predicted almost 3 out of 5 classes correctly. As expected, it was more difficult to predict event classes than to predict binary classes (i.e. `event` vs. `non-event`).
 
-The perplexity turned out to be 1.65, meaning that it was placed between 1 and 2, the perplexities of "perfect" and dummy random classifiers. The perfect classifier would predict the class always correct, and dummy classifier would assign probability 0.5 to both binary classes.
+The perplexity value turned out to be 1.65, meaning that it was placed between 1 and 2, the perplexities of "perfect" and dummy random classifiers. The perfect classifier would predict the class always correct, and dummy classifier would assign probability 0.5 to both binary classes.
 
-Regarding the methods, I considered using also cross-validation, Random Forest, logistic regression, kNN and SVM. I ended up in using NB, because of the pros of it. They are that the model is highly scalable and simple generative classifier, it can usually be trained efficiently in supervised learning, and it often requires only a small number of training data. In addition, it is not much affected by random noise and rarely leads to overfitting.
+Regarding the methods, I also considered using cross-validation, Random Forest, logistic regression, kNN and SVM. I ended up in using NB, because of the pros of it. The model is highly scalable and simple generative classifier, it can usually be trained efficiently in supervised learning, and it often requires only a small number of training data. In addition, it is not much affected by random noise and rarely leads to overfitting.
 
-The downsides of using NB in this project were that all the variables were not independent and normally distributed. Those are the assumptions, but by leaving the correlated and not normally distributed variables out, the assumption is still holding and the classifier performed reasonably. The model can still be biased in some situations.
+The downsides of using NB in this project were that all the variables were not independent and normally distributed. Those are the assumptions, but by leaving the correlated and not normally distributed variables out, the assumption is still kind of holding, and the classifier performed reasonably. The model can still be biased in some situations.
 
 One of the features of NB is that it can be making strong assumptions based on the data, because it is a "naive" model. However, that can also be advantageous, but not every time. Moreover, the model requires information about the distributions and the probabilities, which need to be estimated.
 
-As a hindsight, different subset of the feature variables could have been used. One option would have been to use e.g. only mean values instead of std values, or other variables based on the correlations. 
+As a hindsight, different subset of the feature variables could have been used. One option would have been to use e.g. only mean values instead of std values, or other variables based on correlations. 
 
-After making some tweaks, I got the NB classifier to predict reasonable results, but there were initially some problems with the class distributions. I learned a lot about the effectiviness and usability of the NB classifier. Hopefully this research is helpful in some way and makes opportunities for future work.
+There were initially some problems with the class distributions, but after making some tweaks, I got the NB classifier to predict reasonable results. I learned a lot about the effectiviness and usability of the NB classifier. Hopefully this research is helpful in some way and makes opportunities for future work.
 
 \newpage
 \section{5. Self-grading}
@@ -243,16 +242,17 @@ presentation, and challenge submission) an integer grade on a scale from 0 (fail
 
 I am giving these grades to my deliverables:
 
-- Challenge submission: 3. This looked as it should, and was returned in time. The accuracy could have been a bit better, but there are no large problems with it. This showed understanding of the topic and was suitable for the problem. The challenge was based on the model.
+- Challenge submission: 3. This looked as it should, and was returned in time. The accuracy could have been a bit better, but there are no large problems with it. This showed understanding of the topic and was suitable for the problem. The challenge was based on the model, and overall, the level was average.
 
 - Presentation: 0. Unfortunately, I didn't have time with this.
 
-- Final report: 3. The level of final report was about the same as in challenge submission. Nothing relevant was missing, and this showed some deeper understanding of the topic as well as critical analyzing. The readability should be ok. However, the report could have been a bit more comprehensive, and more machine learning methods could have been used. All in all, the topics and research questions were answered in sufficient manner.
+- Final report: 3. The level of this final report was also average as in challenge submission. Nothing relevant was missing, and this showed some deeper understanding of the topic as well as critical analyzing. The readability should be ok, and there are some visualisations. However, the report could have been a bit more comprehensive, and more machine learning methods could have been used. All in all, the topics and research questions were answered in sufficient manner.
 
-The average grade of these deliverables is 2, so I will give myself a grade 2 of this project in total. The minimal requirements are satisfied; the presentation was not defined as a minimal requirement anywhere. But unfortunately, that drops the grade with a number. The work mostly follows the instructions given.
+The average grade of these deliverables is 2, so I will give myself a grade 2 of this project in total. The minimal requirements are satisfied; the presentation was not defined as a minimal requirement anywhere. But unfortunately, that drops the grade with a number. Otherwise the grade could have been at least 3. The work mostly follows the instructions given.
 
 \newpage
 
+\section{List of references}
 \begin{thebibliography}{9}
 \bibitem{1}
 https://www2.helsinki.fi/en/research-stations/hyytiala
@@ -275,9 +275,8 @@ https://acp.copernicus.org/articles/18/9597/2018/
 \bibitem{7}
 https://iq.opengenus.org/gaussian-naive-bayes/
 
+\bibitem{8}
+Git repo: https://github.com/hartzka/iml21
+
 \end{thebibliography}
-
-## Git repo
-
-https://github.com/hartzka/iml21
 
