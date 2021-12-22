@@ -40,25 +40,25 @@ output:
 \section{1. Introduction}
 \vspace*{1cm}
 
-In this report, we are studying New Particle Formation (NPF) and predicting NPF events based on training data gathered at the Hyytiälä forestry field station SMEAR II mast on different days in the years 2000-2011. 
+In this report, we are studying New Particle Formation (NPF) and predicting NPF events based on training data gathered at the Hyytiälä forestry field station SMEAR II mast on different days in the years 2000-2011 \cite{1, 5}.
 
-NPF is an event of particle formation from micro-particles, found in air, to new molecular particles. It is known to affect climate, air quality and thus human and animal health, but the particle formation process is quite complex and not fully known.
+NPF is an event of particle formation from micro-particles, found in air, to new molecular particles. It is known to affect climate, air quality and thus human and animal health, but the particle formation process is quite complex and not fully known \cite{3, 4}.
 
 Therefore, we are using machine learning methods and libraries to help predicting NPF phenomena based on multiple variables found in training data. The interesting question is: When and under which conditions do NPF events occur, and what kind of events could they be? This is also closely related to weather forecasting. 
 
-The training data, `npf_train.csv`, contained observed NPF data and exactly 100 feature columns presenting physical characteristics. In fact, there were 50 measured variables in total, and for each of the variables, computed mean and std values.
+The training data, `npf_train.csv`, contained observed NPF data and exactly 100 feature columns presenting physical characteristics. In fact, there were 50 measured variables in total, and for each of the variables, computed mean and std values. A longer description of the variables can be found at \cite{2}.
 
 The measurements have been gathered during various days and times between sunrise and sunset. The test data, `npf_test_hidden.csv`, is similar to the training data, but the classes are unknown and thus need to be predicted.
 
-The class variable `class4` (because of 4 different classes) could be either `nonevent` or one of the three events: `II`, `Ia` or `Ib`.
+The class variable `class4` (because of 4 different class categories) could be either `nonevent` or one of the three events: `II`, `Ia` or `Ib`.
 
 The label `nonevent` means that no NPF event occurred, otherwise some of the three events occurred.
 
-Event classes were separated into classes `II` and `I`, the latter into two additional classes `Ia` and `Ib`. Class `II` meant that the confidence level of NPF growth and formation rates was low. Classes belonging to `I` had high confidence level. Class `Ia` meant strong NPF events, while `Ib` included other events.
+Event classes were separated into classes `II` and `I`, the latter into two additional classes `Ia` and `Ib`. Class `II` meant that the confidence level of NPF growth and formation rates was low. Classes belonging to `I` had high confidence level. Class `Ia` meant strong NPF events, while `Ib` included other events \cite{6}.
 
 Eventually, I decided to use Gaussian Naive Bayes (NB, or GNB vs. Bernoulli BNB) classifier to predict NPF events based on testing data, `npf_test_hidden.csv`. The "hidden" means that the testing data did not include the class labels.
 
-This project was done using R with R Markdown and Git as version control. The computations as well as tables in this report were performed with R, and the text mostly with R Markdown. The used IDE was RStudio. There exist small displayed chunks of code, but the code is mostly not echoed. It can be found from the Git repo.
+This project was done using R with R Markdown and Git as version control. The computations as well as tables in this report were performed with R, and the text mostly with R Markdown. The used IDE was RStudio. There exist small displayed chunks of code, but the code is mostly not echoed. The whole project can be found from the Git repo.
 
 In the following sections, I will present the data pre-processing, machine learning methods used, training of the model, discussing and results of the project.
 
@@ -159,12 +159,21 @@ Laplace smoothing of 1 was used for the data. The estimated class probabilities 
 nb_class
 ```
 
+\vspace*{1cm}
+
+```{r, echo=FALSE}
+barplot(nb_class, main="Class Distribution",
+   xlab="Classes", col="blue")
+```
+
+The class distibution plotted.
+
 \newpage
 
 \section{3. Machine learning methods and steps}
 \vspace*{1cm}
 
-I applied Gaussian NB classifier to compute the class probabilities for all rows of testing data. The variables were considered as conditionally independent (because of that is the pre-assumption), even though some of them might have a relationship, smaller or larger correlation.
+I applied Gaussian NB classifier \cite{7} to compute the class probabilities for all rows of testing data. The variables were considered as conditionally independent (because of that is the pre-assumption), even though some of them might have a relationship, smaller or larger correlation.
 
 The variables were studied and only a subset of the variables were used. There were some challenges choosing the variables. The classifier predicted the probabilities of each class for each row. The row was identified as `nonevent`, if the probability was higher than the `nb_class` probability for that class.
 
@@ -214,15 +223,15 @@ It turned out that my binary accuracy (predicting event vs. nonevent) was about 
 
 The perplexity turned out to be 1.65, meaning that it was placed between 1 and 2, the perplexities of "perfect" and dummy random classifiers. The perfect classifier would predict the class always correct, and dummy classifier would assign probability 0.5 to both binary classes.
 
-Regarding the methods, I considered using also cross-validation, Random Forest, logistic regression, kNN and SVM. I ended up in using NB, because of the pros of it. They are that the model is highly scalable and simple generative classifier, it can usually be trained efficiently in supervised learning, and it often requires only a small number of training data.
+Regarding the methods, I considered using also cross-validation, Random Forest, logistic regression, kNN and SVM. I ended up in using NB, because of the pros of it. They are that the model is highly scalable and simple generative classifier, it can usually be trained efficiently in supervised learning, and it often requires only a small number of training data. In addition, it is not much affected by random noise and rarely leads to overfitting.
 
-The downsides of using NB in this project were that all the variables were not independent and normally distributed. Those are the assumptions, but by leaving the correlated and not normally distributed variables out, the assumption is still holding and the classifier performed reasonably.
+The downsides of using NB in this project were that all the variables were not independent and normally distributed. Those are the assumptions, but by leaving the correlated and not normally distributed variables out, the assumption is still holding and the classifier performed reasonably. The model can still be biased in some situations.
 
-One of the features of NB is that it can be making strong assumptions based on the data, because it is a "naive" model. However, that can also be advantageous, but not every time.
+One of the features of NB is that it can be making strong assumptions based on the data, because it is a "naive" model. However, that can also be advantageous, but not every time. Moreover, the model requires information about the distributions and the probabilities, which need to be estimated.
 
 As a hindsight, different subset of the feature variables could have been used. One option would have been to use e.g. only mean values instead of std values, or other variables based on the correlations. 
 
-After making some tweaks, I got the NB classifier to predict reasonable results, but there were initially some problems with the class distributions. I learned a lot about the effectiviness and usability of NB classifier.
+After making some tweaks, I got the NB classifier to predict reasonable results, but there were initially some problems with the class distributions. I learned a lot about the effectiviness and usability of the NB classifier. Hopefully this research is helpful in some way and makes opportunities for future work.
 
 \newpage
 \section{5. Self-grading}
@@ -243,18 +252,30 @@ I am giving these grades to my deliverables:
 The average grade of these deliverables is 2, so I will give myself a grade 2 of this project in total. The minimal requirements are satisfied; the presentation was not defined as a minimal requirement anywhere. But unfortunately, that drops the grade with a number. The work mostly follows the instructions given.
 
 \newpage
-\section{6. References}
-\vspace*{1cm}
 
-## Articles
+\begin{thebibliography}{9}
+\bibitem{1}
+https://www2.helsinki.fi/en/research-stations/hyytiala
 
+\bibitem{2}
+https://wiki.helsinki.fi/pages/viewpage.action?pageId=243959901
+
+\bibitem{3}
 https://iopscience.iop.org/article/10.1088/1748-9326/aadf3c
 
+\bibitem{4}
 https://www.who.int/health-topics/air-pollution
 
+\bibitem{5}
 http://www.borenv.net/BER/archive/pdfs/ber10/ber10-323.pdf
 
+\bibitem{6}
 https://acp.copernicus.org/articles/18/9597/2018/
+
+\bibitem{7}
+https://iq.opengenus.org/gaussian-naive-bayes/
+
+\end{thebibliography}
 
 ## Git repo
 
